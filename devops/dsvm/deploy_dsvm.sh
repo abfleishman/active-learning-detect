@@ -40,7 +40,7 @@ if [ "$RESROUCE_GROUP_PRESENT" == "false" ]; then
     exit 1
 fi
 
-az vm create \
+az.cmd vm create \
     --resource-group $RESOURCE_GROUP \
     --name $VM_NAME \
     --admin-username $VM_ADMIN_USER \
