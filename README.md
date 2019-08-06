@@ -34,7 +34,7 @@ Lastly execute the deploy_dsvm.sh with your edited config file as a parameter. N
 This should happen in git bash (on Windows) terminal on mac or shell on linux
 
 ```sh
-$ sh deploy_dsvm.sh config/dsvm_config.sh
+sh 'D:/CM,Inc/git_repos/ald/devops/dsvm/deploy_dsvm.sh' 'D:/CM,Inc/git_repos/ald/devops/dsvm/config/dsvm_config.sh'
 ```
 
 ## Environment Setup 
@@ -47,7 +47,7 @@ python -m pip install cryptography
 
 #### on linux/unix run this
 ```sh
-python setup-tensorflow.py --host cmi@52.175.208.196 -k /c/Users/ConservationMetrics/.ssh/act-learn-key -s setup-tensorflow.sh
+python '/d/CM,Inc/git_repos/ald/devops/dsvm/setup-tensorflow.py' --host cmi@13.77.157.6 -k /c/Users/ConservationMetrics/.ssh/act-learn-key -s '/d/CM,Inc/git_repos/ald/devops/dsvm/setup-tensorflow.sh'
 ```
 Note that in the host argument **_admin_**@127.0.0.1 section is the DSVM Admin name and admin@**_127.0.0.1_** is the IP address of the DSVM.
 
@@ -55,13 +55,13 @@ Note that in the host argument **_admin_**@127.0.0.1 section is the DSVM Admin n
 in git bash
 ```sh
 # copy from local machine to ssh machine using scp
-scp setup-tensorflow.sh cmi@52.175.208.196:setup-tensorflow.sh
+scp /d/CM,Inc/git_repos/ald/devops/dsvm/setup-tensorflow.sh cmi@52.175.206.57:setup-tensorflow.sh
 
 #While you are at it copy the config you will use
-scp ../../config_oikonos_mega.ini cmi@52.175.208.196:~/repos/models/research/active-learning-detect/config_oikonos_mega.ini
+scp /d/CM,Inc/git_repos/ald/config_oikonos_mega.ini cmi@52.175.206.57:~/repos/models/research/active-learning-detect/config_oikonos_mega.ini
 
 #then ssh in
-ssh cmi@52.175.208.196
+ssh cmi@52.175.206.57
 
 #fix the dos formated text file 
 sudo apt install dos2unix
@@ -77,4 +77,25 @@ sh active_learning_train.sh ../config_oikonos_mega.ini
 
 ```
 
+```sh
+# set up Remote Desktop
+sudo apt-get update
+sudo apt-get install xfce4
 
+sudo apt-get install xrdp=0.6.1-2
+sudo systemctl enable xrdp
+
+echo xfce4-session >~/.xsession
+
+sudo service xrdp restart
+sudo passwd cmi
+sudo service xrdp restart
+
+az vm open-port --resource-group oikonos --name gpu --port 3389
+
+## Mega Detector download files for transfer learing
+
+wget -O megadetector_v3_checkpoint.zip https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v3_checkpoint.zip
+unzip -o megadetector_v3_checkpoint.zip
+wget -O megadetector_v3.config https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v3.config
+wget -O megadetector_v3.pb https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v3.pb
