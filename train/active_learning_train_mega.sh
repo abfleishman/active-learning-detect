@@ -15,12 +15,12 @@ envsubst < $1 > cur_config.ini
 # echo "Creating TF Record"
 # python ${python_file_directory}/convert_tf_record.py cur_config.ini
 # # Download tf model if it doesn't exist
-# if [ ! -d "$download_location/${model_name}" ]; then
-#   mkdir -p $download_location
-#   curl $tf_url --create-dirs -o ${download_location}/${model_name}_checkpoint.zip
-#   unzip -o ${download_location}/${model_name}_checkpoint.zip -d $download_location
-#   curl https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v3.pb --create-dirs -o ${download_location}/${model_name}.pb
-# fi
+if [ ! -d "$download_location/${model_name}" ]; then
+  mkdir -p $download_location/${model_name}
+  curl $tf_url --create-dirs -o ${download_location}/${model_name}/${model_name}_checkpoint.zip
+  unzip -o ${download_location}/${model_name}/${model_name}_checkpoint.zip -d $download_location/${model_name}
+  curl https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v3.pb --create-dirs -o ${download_location}/${model_name}/${model_name}.pb
+fi
 if [ ! -z "$optional_pipeline_url" ]; then
   curl $optional_pipeline_url -o $pipeline_file
 elif [ ! -f $pipeline_file ]; then
