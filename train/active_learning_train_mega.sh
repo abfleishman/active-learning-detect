@@ -18,7 +18,7 @@ python ${python_file_directory}/convert_tf_record.py cur_config.ini
 if [ ! -d "$download_location/${model_name}" ]; then
   mkdir -p $download_location
   curl $tf_url --create-dirs -o ${download_location}/${model_name}_checkpoint.zip
-  unzip -o ${download_location}/${model_name}_checkpoint.zip -C $download_location
+  unzip -o ${download_location}/${model_name}_checkpoint.zip -d $download_location
   curl https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v3.pb --create-dirs -o ${download_location}/${model_name}.pb
 fi
 if [ ! -z "$optional_pipeline_url" ]; then
