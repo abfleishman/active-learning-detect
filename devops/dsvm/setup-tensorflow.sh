@@ -1,9 +1,9 @@
 #!/bin/bash  
-
+#
 #This script automates the instructions from here:
 #https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/installation.md
-
-
+#
+#
 #Fail on first error
 set -e
 #Suppress expanding variables before printing.
@@ -40,11 +40,15 @@ echo -e '\n*******\tRunning Object Detection Tests\t******\n'
 python object_detection/builders/model_builder_test.py
 
 echo -e '\n*******\tClone Active Learning\t*******\n'
-git clone https://github.com/CatalystCode/active-learning-detect ald
-git clone https://github.com/olgaliak/active-learning-detect 
+echo pwd
+cd ~/
+cd repos/
+echo pwd
+git clone https://github.com/CatalystCode/active-learning-detect
 
 echo -e '\n*******\tInstalling Python Packages\t*******\n'
-cd ald
+cd ~/
+cd repos/active-learning-detect
 pip install -r requirements.txt
 
 #Update the config.ini file at repos/models/research/active-learning-detect
