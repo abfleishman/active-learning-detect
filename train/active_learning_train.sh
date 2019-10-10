@@ -35,6 +35,7 @@ sed -i "s/$num_classes_marker[[:space:]]*[[:digit:]]*/$num_classes_marker $num_c
 # Train model on TFRecord
 echo "Training model"
 rm -rf $train_dir
+echo $temp_pipeline
 python ${tf_location_legacy}/train.py --train_dir=$train_dir --pipeline_config_path=$temp_pipeline --logtostderr
 # Export inference graph of model
 echo "Exporting inference graph"
