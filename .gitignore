@@ -118,3 +118,12 @@ tag/*.csv
 
 # TF exported graph files
 .pb
+
+# VSCode
+.vscode/*.json
+
+# Function extension /bin and /obj folders
+Functions/pipeline/bin
+Functions/pipeline/obj
+
+.DS_Store

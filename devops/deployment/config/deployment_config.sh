@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Project configuration
+RESOURCE_GROUP=jmsrg1
+RESOURCE_LOCATION=westus
+PROJECT_STORAGE_ACCOUNT=jmsactlrnstor1
+PROJECT_STORAGE_TEMP_CONTAINER=tempcont
+PROJECT_STORAGE_PERM_CONTAINER=permcont
+
+# Database config
+DATABASE_NAME=jmsactlrndb1
+DATABASE_SERVER_NAME=jmspgsrvr1
+DATABASE_USERNAME=jmsdbadmin
+DATABASE_PASSWORD=Th1siS4Pa55Wurd
+
+# AppInsights config
+APPINSIGHTS_NAME=jmsinsightful1
+
+# Azure Function configuration
+FUNCTION_STORAGE_ACCOUNT=jmsfunstor1
+FUNCTION_APP_NAME=jmsfuncapp1

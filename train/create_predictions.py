@@ -180,7 +180,7 @@ if __name__ == "__main__":
     model = None
     if pred_model_name=="None":
         pred_model_name = None
-    
+
     if len(sys.argv) > 3 and (sys.argv[2].lower() =='init_pred'):
         print("Using MS COCO pretrained model to detect known 90 classes. For class id <-> name mapping check this file: https://github.com/tensorflow/models/blob/master/research/object_detection/data/mscoco_label_map.pbtxt")
         model = sys.argv[3]
