@@ -34,10 +34,10 @@ if [ ! -e "$VM_SSH_KEY" ]; then
 fi
 
 # Does the resource group exist
-RESOURCE_GROUP_PRESENT=`az group exists --name $RESOURCE_GROUP`
+RESOURCE_GROUP_PRESENT=`az.cmd group exists --name $RESOURCE_GROUP`
 if [ "$RESROUCE_GROUP_PRESENT" == "false" ]; then
     echo "Resource group does not exist -- $RESOURCE_GROUP"
-    exit 1
+	az.cmd group create --name $RESOURCE_GROUP --location "westus2"
 fi
 
 az.cmd vm create \
