@@ -7,6 +7,8 @@ This document will explain how to deploy an Azure DSVM and set up the environmen
 Create an SSH Key on your local machine. The following will create a key in your ~/.ssh/act-learn-key location.
 If you already have an SSH key that you want to use, you can skip this step.
 
+This should be done in GitBash
+
 ```sh
 $ ssh-keygen -f ~/.ssh/act-learn-key -t rsa -b 2048
 ```
