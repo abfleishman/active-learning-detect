@@ -22,7 +22,7 @@ def select_jsons(image_directory, user_folders, classes, csv_filename, map_filen
         if user_folders:
             csv_writer.writerow(["filename","class","xmin","xmax","ymin","ymax","height","width","folder","box_confidence", "image_confidence"])
             for (filename,true_height,true_width),folder in all_images:
-                csv_writer.writerow([filename,"NULL",0,0,0,0,true_height,true_width,folder.replace(str(image_directory),""),0,0])
+                csv_writer.writerow([filename,"NULL",0,0,0,0,true_height,true_width,folder.replace(str(image_directory),"",1),0,0])
         else:
             csv_writer.writerow(["filename","class","xmin","xmax","ymin","ymax","height","width","box_confidence", "image_confidence"])
             for filename,true_height,true_width in all_images:
