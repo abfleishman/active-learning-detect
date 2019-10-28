@@ -21,7 +21,7 @@ fi
 . $1
 
 # Check and see if Azure CLI is present
-az --version > /dev/null
+az.cmd --version > /dev/null
 if [ "$?" -ne "0" ]; then
     echo "Unable to find azure CLI"
     exit 1
