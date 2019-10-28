@@ -31,7 +31,7 @@ Lastly execute the deploy_dsvm.sh with your edited config file as a parameter. N
 Install [here](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) if needed.
 
 ```
-cd /D/CM,Inc/git_repos/ald2/ald/devops/dsvm
+cd /D/CM,Inc/active-learning-detect/devops/dsvm
 sh deploy_dsvm.sh config/ic_dsvm_config.sh
 ```
 
