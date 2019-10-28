@@ -1,6 +1,4 @@
 #!/bin/bash
-# Fail on first error
-set -e
 # Source environmental variables
 set -a
 sed -i 's/\r//g' $1
@@ -18,6 +16,7 @@ envsubst < $1 > cur_config.ini
 if [ ! -d "$download_location/${model_name}" ]; then
   mkdir -p $download_location/${model_name}
   curl $tf_url --create-dirs -o ${download_location}/${model_name}/${model_name}_checkpoint.zip
+  echo $download_location/${model_name}
   unzip -o ${download_location}/${model_name}/${model_name}_checkpoint.zip -d $download_location/${model_name}
   curl https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v3.pb --create-dirs -o ${download_location}/${model_name}/${model_name}.pb
 fi
@@ -45,6 +44,9 @@ python ${tf_location_legacy}/train.py --train_dir=$train_dir --pipeline_config_p
 # Export inference graph of model
 echo "Exporting inference graph"
 rm -rf $inference_output_dir
+echo $temp_pipeline
+echo ${train_dir}/model.ckpt-$train_iterations
+echo $inference_output_dir
 python ${tf_location}/export_inference_graph.py --input_type "image_tensor" --pipeline_config_path "$temp_pipeline" --trained_checkpoint_prefix "${train_dir}/model.ckpt-$train_iterations" --output_directory "$inference_output_dir"
 # TODO: Validation on Model, keep track of MAP etc.
 # Use inference graph to create predictions on untagged images
@@ -52,7 +54,7 @@ echo "Creating new predictions"
 python ${python_file_directory}/create_predictions.py cur_config.ini
 echo "Calculating performance"
 python ${python_file_directory}/map_validation.py cur_config.ini
-# Rename predictions and inference graph based on timestamp and upload
+Rename predictions and inference graph based on timestamp and upload
 echo "Uploading new data"
 az storage blob upload --container-name $label_container_name --file ${inference_output_dir}/frozen_inference_graph.pb --name model_$(date +%s).pb  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
 az storage blob upload --container-name $label_container_name --file $untagged_output --name totag_$(date +%s).csv --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY

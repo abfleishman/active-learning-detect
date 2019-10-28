@@ -21,6 +21,7 @@ fi
 if [ ! -z "$optional_pipeline_url" ]; then
   curl $optional_pipeline_url -o $pipeline_file
 elif [ ! -f $pipeline_file ]; then
+  cat "there you go"
   cp ${download_location}/${model_name}/pipeline.config $pipeline_file
 fi
 echo "Making pipeline file from env vars"
@@ -28,6 +29,7 @@ temp_pipeline=${pipeline_file%.*}_temp.${pipeline_file##*.}
 sed "s/${old_label_path//\//\\/}/${label_map_path//\//\\/}/g" $pipeline_file > $temp_pipeline
 sed -i "s/${old_train_path//\//\\/}/${tf_train_record//\//\\/}/g" $temp_pipeline
 sed -i "s/${old_val_path//\//\\/}/${tf_val_record//\//\\/}/g" $temp_pipeline
+sed -i "s/keep_checkpoint_every_n_hours: 1.0/keep_checkpoint_every_n_hours: 1/" $temp_pipeline
 sed -i "s/${old_checkpoint_path//\//\\/}/${fine_tune_checkpoint//\//\\/}/g" $temp_pipeline
 sed -i "s/keep_checkpoint_every_n_hours: 1.0/keep_checkpoint_every_n_hours: 1/" $temp_pipeline
 sed -i "s/$num_steps_marker[[:space:]]*[[:digit:]]*/$num_steps_marker $train_iterations/g" $temp_pipeline

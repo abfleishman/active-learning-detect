@@ -26,7 +26,6 @@ YMAX_IDX = 4
 def chunker(seq,size):
     return(seq[pos:pos + size] for pos in range(0,len(seq), size))
 
-
 def calculate_confidence(predictions):
     return min([float(prediction[0]) for prediction in predictions])
 
@@ -131,7 +130,6 @@ def get_suggestions(detector, basedir: str, untagged_output: str,
             all_predictions_temp = detector.predict(all_images_temp, min_confidence=min_confidence)
             all_predictions += all_predictions_temp
 
-
     else:
         with open(cur_tagged, 'r') as file:
             reader = csv.reader(file)
@@ -180,6 +178,9 @@ if __name__ == "__main__":
     cur_tagging = None
     classes = []
     model = None
+    if pred_model_name=="None":
+        pred_model_name = None
+
     if len(sys.argv) > 3 and (sys.argv[2].lower() =='init_pred'):
         print("Using MS COCO pretrained model to detect known 90 classes. For class id <-> name mapping check this file: https://github.com/tensorflow/models/blob/master/research/object_detection/data/mscoco_label_map.pbtxt")
         model = sys.argv[3]
@@ -195,7 +196,6 @@ if __name__ == "__main__":
 
             Path.mkdir(Path(config_file["inference_output_dir"]),parents=True,exist_ok=True)
             block_blob_service.get_blob_to_path(container_name, str(pred_model_name), str(Path(config_file["inference_output_dir"])/"frozen_inference_graph.pb"))
-
         if file_date:
             block_blob_service.get_blob_to_path(container_name, max(file_date, key=lambda x:x[1])[0], "tagged.csv")
             cur_tagged = "tagged.csv"
@@ -206,4 +206,3 @@ if __name__ == "__main__":
 
     cur_detector = TFDetector(classes, model)
     get_suggestions(cur_detector, image_dir, untagged_output, tagged_output, cur_tagged, cur_tagging, filetype=config_file["filetype"], min_confidence=float(config_file["min_confidence"]), user_folders=config_file["user_folders"]=="True",image_size=(1024,600))
-
