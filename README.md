@@ -1,109 +1,105 @@
-# Setting up an Azure DSVM for Active Learning
+# Active learning + object detection
+Labeling images for object detection is commonly required task to get started with Computer Vision related project.
+Good news that you do not have to label all images  (draw bounding boxes) from scratch --- the goal of this project is to add (semi)automation to the process. 
+Please refer to this blog post that describes Active Learning and semi-automated flow: 
+  [Active Learning for Object Detection in Partnership with Conservation Metrics](https://www.microsoft.com/developerblog/2018/11/06/active-learning-for-object-detection/)
+We will use Transfer Learning and Active Learning as core Machine Learning  components of the pipeline.
+ -- Transfer Learning: use powerful pre-trained on big dataset (COCO) model as a startining point for fine-tuning foe needed classes.
+ -- Active Learning: human annotator labels small set of images (set1), trains Object Detection Model  (model1) on this set1 and then uses model1 to predict bounding boxes on images (thus pre-labeling those). Human annotator reviews mode1's predictions where the model was less confident -- and thus comes up with new set of images -- set2. Next phase will be to train more powerful model2 on bigger train set that includes set1 and set2 and use model2 prediction results as draft of labeled set3…
+The plan is to have 2 versions of pipeline set-up.
 
-This document will explain how to deploy an Azure DSVM and set up the environment for Active Learning.
+# Semi-automated pipeline
 
-## Deployment
+![Flow](images/semi_automated.png)  
 
-Create an SSH Key on your local machine. The following will create a key in your ~/.ssh/act-learn-key location. Make sure you do not have  a passphase as authentication will not work in later steps using the python setup-script.py
+This one (ideally) includes minimum setup. The core components here are: 
+1) Azure Blob Storage with images to be labeled.
+It will also be used to save "progress" logs of labeling activities
+2) "Tagger" machine(s) 
+This is computer(s) that human annotator(s) is using as environment for labeling portion of images -- for example [VOTT](https://github.com/Microsoft/VoTT).  
+Here example of labeling flow in VOTT: I've labled wood "knots" (round shapes) and "defect" (pretty much  non-round shaped type of defect):
 
-```sh
-$ ssh-keygen -f ~/.ssh/act-learn-key -t rsa -b 2048
+![Labeling](images/VOTT_knot_defect.PNG)
+
+
+3) Model re-training machine (or service)
+This is environment were Object Detection model is retrained with growing train set as well as does predictions of bounding boxes on unlabeled images.
+There is config.ini that needs to be updated with details like blob storage connection  and model retraining configuration. 
+
+# Automated pipeline
+More details TBD.  
+Basically the idea is to kick off Active Learning cycle with model retaining as soon as human annotator revises new set of images.
+
+# Notes before we get started 
+- The steps below refer to updating config.ini. You can find detailed description of config [here](config_description.md) 
+- Got several thousands of images (or much more) and not sure if random sampling will be helpful to get rolling with labeling data? 
+Take a look at [Guide to "initialization" predictions](init_pred_desription.md).
+
+# How to run semi-automated pipeline
+The flow below assumes the following: 
+1) We use Tensorflow Object Detection API (Faster RCNN with Resnet 50 as default option)  to fine tune object detection. 
+2) Tensorflow Object Detection API is setup on Linux box (Azure DSVM is an option) that you can ssh to. See docs for Tensorflow Object Detection API regarding its general config.
+3) Data(images) is in Azure blob storage
+4) Human annotators use [VOTT](https://github.com/Microsoft/VoTT)  to label\revise images.  To support another tagging tool it's output (boudin boxes) need to be converted to csv form -- pull requests are welcomed!
+
+Here is general flow has 2 steps:
+1) Environments setup
+2) Active Learnining cycle: labeling data and running scipts to update model and feed back results for human annotator to review.  
+The whole flow is currenly automated with **4 scrips** user needs to run.
+
+
+### General  prep
+1) Provision Azure Blob storage. Create 2 containers: _"activelearningimages"_ and _"activelearninglabels"_
+2) Upload unzipped folder with images to  _"activelearningimages"_ container.
+
+
+### On Linux box aka Model (re)training env
+Run the devops/dsvm/deploy_dsvm.sh scrript to create a VM for this process. follow the instructions [here]()
+
+### Tagger machine(s) (could be same as Linux box or separate boxes\vms)
+1) Have Python 3.6+ up and running 
+TODO: add section for installing python 
+If you do not have python 3.6+ downlaod [anaconda python](https://www.anaconda.com/distribution/#download-section) 
 ```
+python --version
 
-We require that your SSH key be added to the SSH agent. To add your SSH key to the SSH agent use the **_ssh-add_** command
-
-```sh
- eval `ssh-agent -s`
- ssh-add -k /c/Users/ConservationMetrics/.ssh/act-learn-key
+python -m pip install azure.storage.blob
 ```
+3) Clone this repo, copy  updated config.ini from Model re-training box (as it has Azure Blob Storage and other generic info already).
+4) Update  _config.ini_ values for _# Tagger Machine_ section:    This is a temperary directory, and the process will delete all the 
+   files every time you label so do not use an existing dir that you care about
+        `tagging_location=D:\temp\NewTag`
 
-Secondly edit the environment variables in the [dsvm_config.sh](config/dsvm_config.sh) script with your own values. For instance:
+### On Linux box aka Model (re)training env
+Run bash script to Init pipeline  
+`~/repos/models/research/active-learning-detect/train$ . ./active_learning_initialize.sh  ../config.ini`
+This step will:
+- Download all images to the box.
+- Create totag_xyz.csv on the blob storage ( "activelearninglabels" container by default).  
+This is the snapshot of images file names that need tagging (labeling).  As human annotators make progress on labeling data the list will get smaller and smaller.
 
-<pre>
-RESOURCE_GROUP=<b>MyAzureResourceGroup</b>
-# VM config
-VM_SKU=Standard_NC6 #Make sure VM SKU is available in your resource group's region 
-VM_IMAGE=microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:latest
-VM_DNS_NAME=<b>mytestdns</b>
-VM_NAME=<b>myvmname</b>
-VM_ADMIN_USER=<b>johndoe</b>
-VM_SSH_KEY=~/.ssh/act-learn-key.pub
-</pre>
+### Label Now model can be trained.
 
-Lastly execute the deploy_dsvm.sh with your edited config file as a parameter. Note that the Azure CLI is required. Install [here](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) if needed.
-This should happen in git bash (on Windows) terminal on mac or shell on linux
+### Model(re)training on Linux box
+Before your first time running the model, and at any later time if you would like to repartition the test set, run:
 
-```sh
-sh 'D:/CM,Inc/git_repos/ald/devops/dsvm/deploy_dsvm.sh' 'D:/CM,Inc/git_repos/ald/devops/dsvm/config/dsvm_config.sh'
-```
+`~/repos/models/research/active-learning-detect/train$ . ./repartition_test_set_script.sh  ../config.ini`
 
-## Environment Setup 
-We provide a module that will copy over a shell script to your DSVM and execute the shell script to setup an active learning environment.
+This script will take all the tagged data and split some of it into a test set, which will not be trained/validated on and will then be use by evalution code to return mAP values.
 
-To copy and execute the shell script on the DSVM use the following command
-make sure cryptography is version 2.5 ofr more (this is python module
-```sh
-python -m pip uninstall cryptography
-python -m pip install cryptography
-```
+Run bash script:  
+`~/repos/models/research/active-learning-detect/train$ . ./active_learning_train.sh  ../config.ini`
 
-#### on linux/unix run this
-```sh
-python '/d/CM,Inc/git_repos/ald/devops/dsvm/setup-tensorflow.py' --host cmi@13.77.157.6 -k /c/Users/ConservationMetrics/.ssh/act-learn-key -s '/d/CM,Inc/git_repos/ald/devops/dsvm/setup-tensorflow.sh'
-```
-Note that in the host argument **_admin_**@127.0.0.1 section is the DSVM Admin name and admin@**_127.0.0.1_** is the IP address of the DSVM.
+This script will kick of training based on available labeled data.  
 
-#### on windows you must run it differently  
-in git bash
+Model will evaluated on test set and perf numbers will be saved in blob storage (performance.csv).
 
-```sh
-# copy from local machine to ssh machine using scp
-scp /d/CM,Inc/git_repos/ald/devops/dsvm/setup-tensorflow.sh cmi@52.183.70.186:setup-tensorflow.sh
+Latest totag.csv will have predictions for all available images made of the newly trained model -- bounding box locations that could be used by human annotator as a starter.
 
-#While you are at it copy the config you will use
-scp /d/CM,Inc/git_repos/ald/config_oikonos_mega.ini cmi@52.183.70.186:~/repos/models/research/active-learning-detect/config_oikonos_mega.ini
+### Reviewing of pre-labeled results (on Tagger machine)
+Human annotator(s) deletes any leftovers from previous predictions (csv files in active-learning-detect\tag, image dirs) and runs goes again sequence of:
+1) Downloading next batch of pre-labeled images for review (`active-learning-detect\tag\download_vott_json.py`)
+2) Going through the pre-labeled images with [VOTT](https://github.com/Microsoft/VoTT)  and fixing bounding boxes when needed.
+3) Pushing back new set of labeled images to storage (`active-learning-detect\tag\upload_vott_json.py`) 
 
-#then ssh in
-ssh cmi@52.183.70.186
-
-#fix the dos formated text file (maybe not needed?)
-sudo apt install dos2unix
-dos2unix setup-tensorflow.sh
-
-# run the setup script
-sh setup-tensorflow.sh
-
-## download the mega train file  (af modified the active elarning file)
-cd ~/repos/models/research/active-learning-detect/train
-wget -O active_learning_train_mega.sh https://raw.githubusercontent.com/abfleishman/active-learning-detect/master/train/active_learning_train_mega.sh
-
-# run the init and training
-sh active_learning_initialize.sh ../config_oikonos_mega.ini
-sh active_learning_train_mega.sh ../config_oikonos_mega.ini
-
-```
-
-# set up Remote Desktop
-```sh
-sudo apt-get update
-sudo apt-get install xfce4
-
-sudo apt-get install xrdp=0.6.1-2
-sudo systemctl enable xrdp
-
-echo xfce4-session >~/.xsession
-
-sudo service xrdp restart
-sudo passwd cmi
-sudo service xrdp restart
-```
-### not on VM ###
-`az vm open-port --resource-group oikonos --name gpu --port 3389`
-
-## Mega Detector download files for transfer learing
-```
-wget -O megadetector_v3_checkpoint.zip https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v3_checkpoint.zip
-unzip -o megadetector_v3_checkpoint.zip
-wget -O megadetector_v3.config https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v3.config
-wget -O megadetector_v3.pb https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/megadetector_v3.pb
-```
+Training cycle can now be repeated on bigger training set and dataset with higher quality of pre-labeled bounding boxes could be obtained. 
