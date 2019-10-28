@@ -19,6 +19,7 @@ def select_jsons(image_directory, user_folders, classes, csv_filename, map_filen
 
     with open(csv_filename, 'w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
+		
         if user_folders:
             csv_writer.writerow(["filename","class","xmin","xmax","ymin","ymax","height","width","folder","box_confidence", "image_confidence"])
             for (filename,true_height,true_width),folder in all_images:
