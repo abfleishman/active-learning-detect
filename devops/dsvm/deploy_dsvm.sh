@@ -35,11 +35,14 @@ fi
 
 # Does the resource group exist
 RESOURCE_GROUP_PRESENT=`az.cmd group exists --name $RESOURCE_GROUP`
-if [ "$RESROUCE_GROUP_PRESENT" == "false" ]; then
-    echo "Resource group does not exist -- $RESOURCE_GROUP"
-	az.cmd group create --name $RESOURCE_GROUP --location "westus2"
+echo "$RESOURCE_GROUP exists? $RESOURCE_GROUP_PRESENT"
+if [ "$RESOURCE_GROUP_PRESENT" == "false" ]; then
+    echo "Resource group does not exist -- $RESOURCE_GROUP creating..."
+	az.cmd group create \
+		--name $RESOURCE_GROUP \
+		--location $LOCATION
 fi
-
+echo "Creating VM $VM_NAME in $RESOURCE_GROUP in the region $LOCATION" 
 az.cmd vm create \
     --resource-group $RESOURCE_GROUP \
     --name $VM_NAME \
@@ -47,7 +50,8 @@ az.cmd vm create \
     --public-ip-address-dns-name $VM_DNS_NAME \
     --image $VM_IMAGE \
     --size $VM_SKU \
-    --ssh-key-value $VM_SSH_KEY
+    --ssh-key-value $VM_SSH_KEY \
+	--location $LOCATION
 if [ "$?" -ne "0" ]; then
     echo "Unable to provision DSVM"
     exit 1
