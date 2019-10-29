@@ -51,5 +51,9 @@ cd ~/
 cd repos/active-learning-detect
 pip install -r requirements.txt
 
-#Update the config.ini file at repos/models/research/active-learning-detect
+echo -e '\n*******\tClone AF modified Active Learning\t*******\n'
+cd ~/
+git clone https://github.com/abfleishman/active-learning-detect.git
+
+# Update the config.ini file at repos/models/research/active-learning-detect
 echo -e 'Objection dectection install validation complete'
