@@ -1,92 +1,124 @@
 # Setting up an Azure DSVM for Training and Prediction
 
-This document will explain how to deploy an Azure DSVM and set up the environment for Active Learning.
+This document will explain how to deploy an Azure DSVM and set up the environment for Active Learning. Everything here should be run using GitBash which is an emulator for a unix based system allowing us to run the bash scripts (.sh) that our friends at Microsoft wrote.
 
-## Deployment
+## Check that you have Azure CLI installed and that you are logged in
+Note that the Azure CLI is required for this work flow.  
+The Azure CLI is a command line tool to interact with Azure.
 
-Create an SSH Key on your local machine. The following will create a key in your ~/.ssh/act-learn-key location.
-If you already have an SSH key that you want to use, you can skip this step.
-
-This should be done in GitBash
-
-```sh
-$ ssh-keygen -f ~/.ssh/act-learn-key-test -t rsa -b 2048
-```
-
-Secondly edit the environment variables in the [dsvm_config.sh](config/dsvm_config.sh) script with your own values, and save a copy with for the project you are working on.
-For instance:
-
-<pre>
-RESOURCE_GROUP=<b>MyAzureResourceGroup</b>
-# VM config
-VM_SKU=Standard_NC6_Promo #Make sure VM SKU is available in your resource group's region 
-VM_IMAGE=microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:latest
-VM_DNS_NAME=<b>mytestdns</b>
-VM_NAME=<b>myvmname</b>
-VM_ADMIN_USER=<b>johndoe</b>
-VM_SSH_KEY=~/.ssh/act-learn-key.pub
-</pre>
-
-Lastly execute the deploy_dsvm.sh with your edited config file as a parameter. Note that the Azure CLI is required.
+Follow the instruction to install using the MSI installer, not the command line tool to install.
 Install [here](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) if needed.
 
 ```
+# Check that it is installed:
+az.cmd --version
 
-cd /D/CM,Inc/git_repos/active-learning-detect/devops/dsvm
-az login
-sh deploy_dsvm.sh config/dsvm_config.sh
+# Make sure you are logged in to the Azure CLI
+az.cmd login
 
 ```
 
-## Environment Setup 
-We provide a module that will copy over a shell script to your DSVM and execute the shell script to setup an active learning environment.
+## Deployment
+This will walk you though the steps needed to create a VM.  Before we do we must create an SSH key that we will feed to the VM to be able to access it later.
 
+### Create a ssh key
+Create an SSH Key on your local machine. The following will create a key in your ~/.ssh/act-learn-key location.
+If you already have an SSH key that you want to use, you can skip this step.
+
+```sh
+$ ssh-keygen -f ~/.ssh/act-learn-key -t rsa -b 2048
+```
+
+Then start a instance of ssh-agent (key management software that runs in the background on your machine).
 We require that your SSH key be added to the SSH agent. To add your SSH key to the SSH agent use the **_ssh-add_** command
 
 ```
 eval "$(ssh-agent)"
-ssh-add -k ~/.ssh/act-learn-key-test
+ssh-add -k ~/.ssh/act-learn-key
 ```
 
-If you are working on a Mac or Linux OS:  Use this python script to copy and execute the shell script on the DSVM using the following command
+### Set up the DSVM config file
+Edit the environment variables in the [dsvm_config.sh](config/dsvm_config.sh) script with your own values, and save a copy with for the project you are working on in Dropbox or in the config folder.
+For instance:
+
+<pre>
+RESOURCE_GROUP=<b>MyAzureResourceGroup</b>
+RESOURCE_GROUP=westus2
+VM_SKU=Standard_NC6_Promo # Must be a NC series machine for GPU computing. Make sure VM SKU is available in your resource group's region 
+VM_IMAGE=microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:latest
+VM_NAME=<b>myvmname</b> # give it a unique VM name
+VM_DNS_NAME=<b>mytestdns</b> # give it a unique DNS name
+VM_ADMIN_USER=<b>cmi</b>
+VM_SSH_KEY=/c/Users/ConservationMetrics/.ssh/act-learn-key.pub
+</pre>
+
+### Deploy and launch the VM
+Lastly execute the deploy_dsvm.sh with your edited config file as a parameter. 
 
 ```
-python setup-tensorflow.py --host cmi@52.191.129.248 -k ~/.ssh/act-learn-key -s setup-tensorflow.sh
+#change directory to the git repo you cloned
+cd /D/CM,Inc/git_repos/active-learning-detect/devops/dsvm
+
+# run the bash script (.sh) with your dsvm_config
+sh deploy_dsvm.sh config/dsvm_config.sh
+
 ```
+
+### Environment Setup 
+We will need two GitBash consols for this section. One to ssh into the new VM and a second to use `scp` to send files to the VM from your local computer. `scp` is a commandline tool that sends files over ssh
+#### For Windows
+If on windows, run the setup-tensorflow.sh script on the VM over ssh.  
+
+Make sure the EOL (end of line) format is unix (option in the edit menu of notpad++)
 
 Note that in the host argument **_admin_**@127.0.0.1 section is the DSVM Admin name and admin@**_127.0.0.1_** is the IP address of the DSVM.
 
-If on windows, use scp to copy the script to the dsvm and then ssh in and exicute the script.  make sure the EOL (end of line) format is unix (option in the edit menu of notpad++)
+```
+# this command will connect over ssh and run the `sh` (bash) the arguments after the "<" 
+ssh cmi@40.65.119.87 "sh" < "/D/CM,Inc/git_repos/ald/devops/dsvm/setup-tensorflow.sh"
 
 ```
-scp "/D/CM,Inc/git_repos/ald2/ald/devops/dsvm/setup-tensorflow.sh"  cmi@51.141.161.147:/home/cmi
-```
-Once you have run that you can ssh into the machine and run the script we copied over:
-```
-ssh cmi@51.141.161.147
-sh setup-tensorflow.sh
-```
 
-Open a new git bash consol and start an ssh agent and then send your edited AL config to the VM:
+Check the output for errors.  There are a few that happen and willnot effect things listed below:
+
+in the section installing python packages:
+> -ERROR: mxnet-model-server 1.0.1 requires model-archiver, which is not installed.
+
+## Initialize a new project
+
+### Send your AL config to the VM
+In your second git bash consol, start an ssh agent, add the key, and then send your edited AL config to the VM (not the DSVM_config):
 ```
 eval "$(ssh-agent)"
 ssh-add -k ~/.ssh/act-learn-key-test
-# scp "/D/CM,Inc/Dropbox (CMI)/CMI_Team/Analysis/2019/USGS_AerialImage_2019/configs/config_usgs19_pred20191021.ini" cmi@51.141.161.147:/home/cmi/active-learning-detect
-scp "/D/CM,Inc/git_repos/ald/config_inception.ini" cmi@51.141.161.147:/home/cmi/active-learning-detect
+
+# scp copies a file to a remote computer into a folder (after the ":") on that computer 
+scp "/D/CM,Inc/git_repos/ald/config_inception.ini" cmi@40.65.119.87:/home/cmi/repos/active-learning-detect
 ```
 
-Back in your SSH session, initialize your active learning project by changing directory
+### initialize the project
+Connect via SSH, initialize your active learning project by changing directory
 
+here we are exicuting the command `sh ./active-learning-detect/train/active_learning_initialize.sh ...` on the remote machine.
 ```
+ssh cmi@40.65.119.87
+
 cd active-learning-detect/train
-sh active_learning_initialize.sh ../config_inception.ini
+
+sh ./active_learning_initialize.sh ../config_inception.ini
+```
+#### NOT WORKING
+The intention is that this would be able to run the script without being in an ssh session but it is not working.
+```
+ssh cmi@40.65.119.87 "cd ./repos/active-learning-detect/train&&sh ./active_learning_initialize.sh ../config_inception.ini"
 ```
 After you do that you can switch to the R cmiimagetools workflow for labeling.  Once you have labeled a few images (100) then we can train a model
 
+
 # Train model
-ssh back into your VM 
+ssh back into your VM and train a model.  remember to set you model training paramters in your config and if you change them localliy `scp` them back up tot he remote machine
 ```
-ssh cmi@51.141.161.147
+ssh cmi@40.65.119.87
 cd active-learning-detect/train
 sh active_learning_train.sh ../config_usgs19_inception.ini
 
@@ -94,6 +126,8 @@ sh active_learning_train.sh ../config_usgs19_inception.ini
 
 # Predict on new images without training
 ```
+ssh cmi@40.65.119.87
+
 cd active-learning-detect/train
 sh active_learning_predict_no_train.sh ../config_usgs19_pred20191021.ini
 ```
@@ -102,7 +136,7 @@ sh active_learning_predict_no_train.sh ../config_usgs19_pred20191021.ini
 # below here may not work so skip
 
 # set up Remote Desktop
-```sh
+```
 sudo apt-get update
 sudo apt-get install xfce4
 
@@ -116,5 +150,5 @@ sudo passwd cmi
 sudo service xrdp restart
 ```
 ### not on VM ###
-`az vm open-port --resource-group oikonos --name gpu --port 3389`
+`az.cmd vm open-port --resource-group oikonos --name gpu --port 3389`
 
