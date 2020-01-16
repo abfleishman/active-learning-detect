@@ -13,11 +13,15 @@ set +v
 #When executing on a DSVM over SSH some paths for pip, cp, make, etc may not be in the path,
 export PATH=/anaconda/envs/py35/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/opt/caffe/build/install/bin/:/usr/local/cuda/bin:/dsvm/tools/cntk/cntk/bin:/usr/local/cuda/bin:/dsvm/tools/cntk/cntk/bin:/dsvm/tools/spark/current/bin:/opt/mssql-tools/bin:/bin
 
+echo -e '\n*******\tClone ALD \t*******\n'
+
+git clone https://github.com/abfleishman/active-learning-detect repos/active-learning-detect
+
 echo -e '\n*******\tClone Tensorflow Models\t*******\n'
 git clone https://github.com/tensorflow/models.git repos/models
 
 echo -e '\n*******\tInstall Tensorflow package\t*******\n'
-cd repos/models/ && pip install tensorflow-gpu
+cd repos/models/ && pip install tensorflow-gpu==1.13.1
 
 echo -e '\n*******\tInstall COCO API\t*******\n'
 cd ~/
@@ -39,12 +43,12 @@ export PYTHONPATH=$PYTHONPATH:`pwd`:`pwd`/slim
 echo -e '\n*******\tRunning Object Detection Tests\t******\n'
 python object_detection/builders/model_builder_test.py
 
-echo -e '\n*******\tClone Active Learning\t*******\n'
-pwd
-cd ~/
-cd repos/
-pwd
-git clone https://github.com/abfleishman/active-learning-detect
+# echo -e '\n*******\tClone Active Learning\t*******\n'
+# pwd
+# cd ~/
+# cd repos/
+# pwd
+# git clone https://github.com/abfleishman/active-learning-detect
 
 echo -e '\n*******\tInstalling Python Packages\t*******\n'
 cd ~/
