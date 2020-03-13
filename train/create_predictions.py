@@ -6,6 +6,7 @@ import cv2
 import csv
 from collections import defaultdict
 import numpy as np
+import datetime
 
 NUM_CHANNELS=3
 FOLDER_LOCATION=8
@@ -71,7 +72,7 @@ def make_csv_output(all_predictions: List[List[List[int]]], all_names: List[str]
 def get_suggestions(detector, basedir: str, untagged_output: str,
     tagged_output: str, cur_tagged: str, cur_tagging: str, min_confidence: float =.2,
     image_size: Tuple=(1024,600), filetype: str="*.jpg", minibatchsize: int=50,
-    user_folders: bool=True):
+    user_folders: bool=True, batch_size=50):
     '''Gets suggestions from a given detector and uses them to generate VOTT tags
 
     Function inputs an instance of the Detector class along with a directory,
@@ -82,6 +83,8 @@ def get_suggestions(detector, basedir: str, untagged_output: str,
     The optional confidence interval and image size correspond to the matching optional
     arguments to the Detector class
     '''
+    start= datetime.datetime.now()
+    print("prediction started: "+start.strftime("%Y-%m-%d %H:%M:%S"))
     basedir = Path(basedir)
     CV2_COLOR_LOAD_FLAG = 1
     all_predictions = []
@@ -113,22 +116,26 @@ def get_suggestions(detector, basedir: str, untagged_output: str,
         all_sizes_temp = []
         all_predictions_temp = []
         for subdir in subdirs:
-            cur_image_names = list(subdir.rglob(filetype))
-            print(str(subdir)+": Total image names: ", len(cur_image_names))
-            all_image_files_temp = [str(image_name) for image_name in cur_image_names]
-            foldername = subdir.stem
-            all_names_temp = [(foldername, filename.name) for filename in cur_image_names]
-            all_names += all_names_temp
-            # Reversed because numpy is row-major
-            all_sizes_temp = [cv2.imread(image, CV2_COLOR_LOAD_FLAG).shape[:2] for image in all_image_files_temp]
-            all_sizes += all_sizes_temp
-            all_images_temp = np.zeros((len(all_image_files_temp), *reversed(image_size), NUM_CHANNELS), dtype=np.uint8)
-            for curindex, image in enumerate(all_image_files_temp):
-                all_images_temp[curindex] = cv2.resize(cv2.imread(image, CV2_COLOR_LOAD_FLAG), image_size)
-            print("Shape of all_images: ", all_images_temp.shape)
-            # TODO: could put this in a loop
-            all_predictions_temp = detector.predict(all_images_temp, min_confidence=min_confidence)
-            all_predictions += all_predictions_temp
+            all_cur_image_names = list(subdir.rglob(filetype))
+            
+            print(str(subdir)+": Total image names: ", len(all_cur_image_names))
+            
+            for i in range(0, len(all_cur_image_names), batch_size):
+                cur_image_names = all_cur_image_names[i:i+batch_size]
+                all_image_files_temp = [str(image_name) for image_name in cur_image_names]
+                foldername = subdir.stem
+                all_names_temp = [(foldername, filename.name) for filename in cur_image_names]
+                all_names += all_names_temp
+                # Reversed because numpy is row-major
+                all_sizes_temp = [cv2.imread(image, CV2_COLOR_LOAD_FLAG).shape[:2] for image in all_image_files_temp]
+                all_sizes += all_sizes_temp
+                all_images_temp = np.zeros((len(all_image_files_temp), *reversed(image_size), NUM_CHANNELS), dtype=np.uint8)
+                for curindex, image in enumerate(all_image_files_temp):
+                    all_images_temp[curindex] = cv2.resize(cv2.imread(image, CV2_COLOR_LOAD_FLAG), image_size)
+                print("Shape of all_images: ", all_images_temp.shape)
+                # TODO: could put this in a loop
+                all_predictions_temp = detector.predict(all_images_temp,  batch_size=2, min_confidence=min_confidence)
+                all_predictions += all_predictions_temp
 
     else:
         with open(cur_tagged, 'r') as file:
@@ -148,6 +155,11 @@ def get_suggestions(detector, basedir: str, untagged_output: str,
             all_images[curindex] = cv2.resize(cv2.imread(str(image), CV2_COLOR_LOAD_FLAG), image_size)
         all_predictions = detector.predict(all_images, batch_size=2, min_confidence=min_confidence)
     make_csv_output(all_predictions, all_names, all_sizes, untagged_output, tagged_output, already_tagged, user_folders)
+    end= datetime.datetime.now()
+    print("prediction end: "+start.strftime("%Y-%m-%d %H:%M:%S"))
+    print("prediction duration: "+str(end-start)+" | Time per image: "+str((end-start)/len(all_sizes)))
+    
+    
 
 
 
@@ -167,9 +179,11 @@ if __name__ == "__main__":
     if len(sys.argv)<2:
         raise ValueError("Need to specify config file")
     config_file = Config.parse_file(sys.argv[1])
-    image_dir = config_file["image_dir"]
-    untagged_output = config_file["untagged_output"]
-    tagged_output = config_file["tagged_predictions"]
+    # config_file = Config.parse_file(r"D:\CM,Inc\Dropbox (CMI)\CMI_Team\Analysis\2019\Oikonos_PAG_2019\config_oikonos_gpushark.ini")
+
+    image_dir = re.sub("\$\{data_dir\}", config_file["data_dir"], config_file["image_dir"])
+    untagged_output =re.sub("\$\{data_dir\}", config_file["data_dir"], config_file["untagged_output"]) 
+    tagged_output =re.sub("\$\{data_dir\}", config_file["data_dir"], config_file["tagged_predictions"]) 
     pred_model_name = config_file["pred_model_name"]
     block_blob_service = BlockBlobService(account_name=config_file["AZURE_STORAGE_ACCOUNT"], account_key=config_file["AZURE_STORAGE_KEY"])
     container_name = config_file["label_container_name"]
@@ -205,4 +219,4 @@ if __name__ == "__main__":
             cur_tagging = "tagging.csv"
 
     cur_detector = TFDetector(classes, model)
-    get_suggestions(cur_detector, image_dir, untagged_output, tagged_output, cur_tagged, cur_tagging, filetype=config_file["filetype"], min_confidence=float(config_file["min_confidence"]), user_folders=config_file["user_folders"]=="True",image_size=(1024,600))
+    get_suggestions(cur_detector, image_dir, untagged_output, tagged_output, cur_tagged, cur_tagging, filetype=config_file["filetype"], min_confidence=float(config_file["min_confidence"]), user_folders=config_file["user_folders"]=="True",image_size=(1024,600),batch_size=1000)
