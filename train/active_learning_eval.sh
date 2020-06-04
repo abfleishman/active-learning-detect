@@ -39,7 +39,7 @@ temp_pipeline=${pipeline_file%.*}_temp.${pipeline_file##*.}
 echo "Training model"
 # rm -rf $train_dir
 echo $temp_pipeline
-python ${tf_location_legacy}/eval.py --train_dir=$train_dir --pipeline_config_path=$temp_pipeline --logtostderr
+python ${tf_location_legacy}/eval.py --eval_dir=$train_dir --pipeline_config_path=$temp_pipeline --logtostderr
 # Export inference graph of model
 # echo "Exporting inference graph"
 # rm -rf $inference_output_dir
