@@ -36,7 +36,7 @@ temp_pipeline=${pipeline_file%.*}_temp.${pipeline_file##*.}
 # sed -i "s/$num_examples_marker[[:space:]]*[[:digit:]]*/$num_examples_marker $eval_iterations/g" $temp_pipeline
 # sed -i "s/$num_classes_marker[[:space:]]*[[:digit:]]*/$num_classes_marker $num_classes/g" $temp_pipeline
 # Train model on TFRecord
-echo "Training model"
+echo "Eval model"
 # rm -rf $train_dir
 echo $temp_pipeline
 python ${tf_location_legacy}/eval.py --eval_dir=$train_dir --pipeline_config_path=$temp_pipeline --logtostderr
