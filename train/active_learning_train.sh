@@ -35,6 +35,9 @@ sed -i "s/keep_checkpoint_every_n_hours: 1.0/keep_checkpoint_every_n_hours: 1/" 
 sed -i "s/$num_steps_marker[[:space:]]*[[:digit:]]*/$num_steps_marker $train_iterations/g" $temp_pipeline
 sed -i "s/$num_examples_marker[[:space:]]*[[:digit:]]*/$num_examples_marker $eval_iterations/g" $temp_pipeline
 sed -i "s/$num_classes_marker[[:space:]]*[[:digit:]]*/$num_classes_marker $num_classes/g" $temp_pipeline
+sed -i "s/min_dimension:[[:space:]]*[[:digit:]]*/min_dimension: $min_tile_size/g" $temp_pipeline
+sed -i "s/max_dimension:[[:space:]]*[[:digit:]]*/max_dimension: $max_tile_size/g" $temp_pipeline
+
 # Train model on TFRecord
 echo "Training model"
 rm -rf $train_dir

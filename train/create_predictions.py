@@ -179,11 +179,19 @@ if __name__ == "__main__":
     if len(sys.argv)<2:
         raise ValueError("Need to specify config file")
     config_file = Config.parse_file(sys.argv[1])
-    # config_file = Config.parse_file(r"D:\CM,Inc\Dropbox (CMI)\CMI_Team\Analysis\2019\Oikonos_PAG_2019\config_oikonos_gpushark.ini")
+    # config_file = Config.parse_file(r"D:\CM,Inc\Dropbox (CMI)\CMI_Team\Analysis\2019\PointBlue_Penguins_2019\configs\config_pb2019data500x250_incept10k_gpushark.ini")
 
-    image_dir = re.sub("\$\{data_dir\}", config_file["data_dir"], config_file["image_dir"])
-    untagged_output =re.sub("\$\{data_dir\}", config_file["data_dir"], config_file["untagged_output"]) 
-    tagged_output =re.sub("\$\{data_dir\}", config_file["data_dir"], config_file["tagged_predictions"]) 
+    if config_file["pred_dir"] == 'None':
+        image_dir = re.sub("\$\{data_dir\}", config_file["data_dir"], config_file["image_dir"])
+        untagged_output =re.sub("\$\{data_dir\}", config_file["data_dir"], config_file["untagged_output"]) 
+        tagged_output =re.sub("\$\{data_dir\}", config_file["data_dir"], config_file["tagged_predictions"]) 
+        
+    else:
+        image_dir = re.sub("\$\{data_dir\}", config_file["data_dir"], config_file["image_dir"])+'/'+config_file["pred_dir"]
+        untagged_output =re.sub("\$\{data_dir\}", config_file["data_dir"],  re.sub("untagged.csv",config_file["untagged_output"],'untagged_' + config_file["pred_dir"] + ".csv") ) 
+        tagged_output =re.sub("\$\{data_dir\}", config_file["data_dir"], re.sub("tagged_preds.csv",config_file["tagged_predictions"],'tagged_preds_' + config_file["pred_dir"] + ".csv") )
+        config_file["user_folders"] = "False"
+        
     pred_model_name = config_file["pred_model_name"]
     block_blob_service = BlockBlobService(account_name=config_file["AZURE_STORAGE_ACCOUNT"], account_key=config_file["AZURE_STORAGE_KEY"])
     container_name = config_file["label_container_name"]
@@ -195,6 +203,11 @@ if __name__ == "__main__":
     if pred_model_name=="None":
         pred_model_name = None
 
+    if config_file["min_tile_size"] == 'None':
+        tile_size = (1024,600)
+    else:
+        tile_size = tuple(map(int, (config_file["max_tile_size"],config_file["min_tile_size"])))
+        
     if len(sys.argv) > 3 and (sys.argv[2].lower() =='init_pred'):
         print("Using MS COCO pretrained model to detect known 90 classes. For class id <-> name mapping check this file: https://github.com/tensorflow/models/blob/master/research/object_detection/data/mscoco_label_map.pbtxt")
         model = sys.argv[3]
@@ -219,4 +232,4 @@ if __name__ == "__main__":
             cur_tagging = "tagging.csv"
 
     cur_detector = TFDetector(classes, model)
-    get_suggestions(cur_detector, image_dir, untagged_output, tagged_output, cur_tagged, cur_tagging, filetype=config_file["filetype"], min_confidence=float(config_file["min_confidence"]), user_folders=config_file["user_folders"]=="True",image_size=(1024,600),batch_size=1000)
+    get_suggestions(cur_detector, image_dir, untagged_output, tagged_output, cur_tagged, cur_tagging, filetype=config_file["filetype"], min_confidence=float(config_file["min_confidence"]), user_folders=config_file["user_folders"]=="True",image_size=tile_size,batch_size=1000)
