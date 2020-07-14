@@ -50,14 +50,14 @@ python ${tf_location}/export_inference_graph.py --input_type "image_tensor" --pi
 # TODO: Validation on Model, keep track of MAP etc.
 # Use inference graph to create predictions on untagged images
 echo "Creating new predictions"
-python ${python_file_directory}/create_predictions.py cur_config.ini
+#python ${python_file_directory}/create_predictions.py cur_config.ini
 echo "Calculating performance"
-python ${python_file_directory}/map_validation.py cur_config.ini
+#python ${python_file_directory}/map_validation.py cur_config.ini
 # Rename predictions and inference graph based on timestamp and upload
 echo "Uploading new data"
 timestamp=$(date +%s)
-az storage blob upload --container-name $label_container_name --file ${inference_output_dir}/frozen_inference_graph.pb --name model_$(timestamp).pb  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
-az storage blob upload --container-name $label_container_name --file $temp_pipeline --name pipeline_$(timestamp).config  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
-az storage blob upload --container-name $label_container_name --file $label_map_path --name label_map_$(timestamp).pbtxt  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
-az storage blob upload --container-name $label_container_name --file $untagged_output --name totag_$(timestamp).csv --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
-az storage blob upload --container-name $label_container_name --file $validation_output --name performance_$(timestamp).csv --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
+az storage blob upload --container-name $label_container_name --file ${inference_output_dir}/frozen_inference_graph.pb --name model_$timestamp.pb  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
+az storage blob upload --container-name $label_container_name --file $temp_pipeline --name pipeline_$timestamp.config  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
+az storage blob upload --container-name $label_container_name --file $label_map_path --name label_map_$timestamp.pbtxt  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
+az storage blob upload --container-name $label_container_name --file $untagged_output --name totag_$timestamp.csv --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
+az storage blob upload --container-name $label_container_name --file $validation_output --name performance_$timestamp.csv --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
