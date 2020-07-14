@@ -38,19 +38,19 @@ sed -i "s/$num_classes_marker[[:space:]]*[[:digit:]]*/$num_classes_marker $num_c
 sed -i "s/min_dimension:[[:space:]]*[[:digit:]]*/min_dimension: $min_tile_size/g" $temp_pipeline
 sed -i "s/max_dimension:[[:space:]]*[[:digit:]]*/max_dimension: $max_tile_size/g" $temp_pipeline
 # add data augmentation
-if $add_vertical_flip; then
+if [$add_vertical_flip == "True"]; then
   sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_vertical_flip{\n    }/g" $temp_pipeline
 fi
 
-if $add_horizontal_flip; then
+if [$add_horizontal_flip == "True"]; then
   sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_horizontal_flip{\n    }/g" $temp_pipeline
 fi
 
-if $add_crop_pad_image; then
+if [$add_crop_pad_image == "True"]; then
   sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_crop_pad_image {\n    }/g" $temp_pipeline
 fi
   
-if $add_noise; then
+if [$add_noise == "True"]; then
   sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_pixel_value_scale {\n    minval:0.9\n    maxval: 1.1\n    }/g" $temp_pipeline
 fi    
 echo $temp_pipeline
