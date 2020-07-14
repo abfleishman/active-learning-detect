@@ -6,12 +6,13 @@ sed -i 's/\r//g' $1
 set +a
 # Updating vars in config file
 envsubst < $1 > cur_config.ini
+echo $add_noise
 # Update images from blob storage
 echo "Updating Blob Folder"
-python ${python_file_directory}/update_blob_folder.py cur_config.ini
+#python ${python_file_directory}/update_blob_folder.py cur_config.ini
 # Create TFRecord from images + csv file on blob storage
 echo "Creating TF Record"
-python ${python_file_directory}/convert_tf_record.py cur_config.ini
+#python ${python_file_directory}/convert_tf_record.py cur_config.ini
 # Download tf model if it doesn't exist
 if [ ! -d "$download_location/${model_name}" ]; then
   mkdir -p $download_location
@@ -31,28 +32,19 @@ sed -i "s/${old_train_path//\//\\/}/${tf_train_record//\//\\/}/g" $temp_pipeline
 sed -i "s/${old_val_path//\//\\/}/${tf_val_record//\//\\/}/g" $temp_pipeline
 sed -i "s/keep_checkpoint_every_n_hours: 1.0/keep_checkpoint_every_n_hours: 1/" $temp_pipeline
 sed -i "s/${old_checkpoint_path//\//\\/}/${fine_tune_checkpoint//\//\\/}/g" $temp_pipeline
-sed -i "s/keep_checkpoint_every_n_hours: 1.0/keep_checkpoint_every_n_hours: 1/" $temp_pipeline
 sed -i "s/$num_steps_marker[[:space:]]*[[:digit:]]*/$num_steps_marker $train_iterations/g" $temp_pipeline
 sed -i "s/$num_examples_marker[[:space:]]*[[:digit:]]*/$num_examples_marker $eval_iterations/g" $temp_pipeline
 sed -i "s/$num_classes_marker[[:space:]]*[[:digit:]]*/$num_classes_marker $num_classes/g" $temp_pipeline
 sed -i "s/min_dimension:[[:space:]]*[[:digit:]]*/min_dimension: $min_tile_size/g" $temp_pipeline
 sed -i "s/max_dimension:[[:space:]]*[[:digit:]]*/max_dimension: $max_tile_size/g" $temp_pipeline
 # add data augmentation
-if [$add_vertical_flip == "True"]; then
-  sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_vertical_flip{\n    }/g" $temp_pipeline
-fi
+test "$add_vertical_flip" == True&&   sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_vertical_flip{\n    }/g" $temp_pipeline
 
-if [$add_horizontal_flip == "True"]; then
-  sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_horizontal_flip{\n    }/g" $temp_pipeline
-fi
+test "$add_horizontal_flip" == True&&  sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_horizontal_flip{\n    }/g" $temp_pipeline
 
-if [$add_crop_pad_image == "True"]; then
-  sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_crop_pad_image {\n    }/g" $temp_pipeline
-fi
+test "$add_crop_pad_image" == True&&  sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_crop_pad_image {\n    }/g" $temp_pipeline
   
-if [$add_noise == "True"]; then
-  sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_pixel_value_scale {\n    minval:0.9\n    maxval: 1.1\n    }/g" $temp_pipeline
-fi    
+test "$add_noise" == True&&  sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_pixel_value_scale {\n    minval:0.9\n    maxval: 1.1\n    }/g" $temp_pipeline
 echo $temp_pipeline
 more $temp_pipeline
 
