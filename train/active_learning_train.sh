@@ -37,28 +37,46 @@ sed -i "s/$num_examples_marker[[:space:]]*[[:digit:]]*/$num_examples_marker $eva
 sed -i "s/$num_classes_marker[[:space:]]*[[:digit:]]*/$num_classes_marker $num_classes/g" $temp_pipeline
 sed -i "s/min_dimension:[[:space:]]*[[:digit:]]*/min_dimension: $min_tile_size/g" $temp_pipeline
 sed -i "s/max_dimension:[[:space:]]*[[:digit:]]*/max_dimension: $max_tile_size/g" $temp_pipeline
+# add data augmentation
+if $add_vertical_flip; then
+  sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_vertical_flip{\n    }/g" $temp_pipeline
+fi
+
+if $add_horizontal_flip; then
+  sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_horizontal_flip{\n    }/g" $temp_pipeline
+fi
+
+if $add_crop_pad_image; then
+  sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_crop_pad_image {\n    }/g" $temp_pipeline
+fi
+  
+if $add_noise; then
+  sed -i "s/  data_augmentation_options {/  data_augmentation_options {\n    random_pixel_value_scale {\n    minval:0.9\n    maxval: 1.1\n    }/g" $temp_pipeline
+fi    
+echo $temp_pipeline
+more $temp_pipeline
 
 # Train model on TFRecord
-echo "Training model"
-rm -rf $train_dir
-echo $temp_pipeline
-python ${tf_location_legacy}/train.py --train_dir=$train_dir --pipeline_config_path=$temp_pipeline --logtostderr
-# Export inference graph of model
-echo "Exporting inference graph"
-rm -rf $inference_output_dir
-python ${tf_location}/export_inference_graph.py --input_type "image_tensor" --pipeline_config_path "$temp_pipeline" --trained_checkpoint_prefix "${train_dir}/model.ckpt-$train_iterations" --output_directory "$inference_output_dir"
-# TODO: Validation on Model, keep track of MAP etc.
-# Use inference graph to create predictions on untagged images
-echo "Creating new predictions"
-python ${python_file_directory}/create_predictions.py cur_config.ini
-echo "Calculating performance"
-python ${python_file_directory}/map_validation.py cur_config.ini
-# Rename predictions and inference graph based on timestamp and upload
-echo "Uploading new data"
-timestamp=$(date +%s)
-az storage blob upload --container-name $label_container_name --file ${inference_output_dir}/frozen_inference_graph.pb --name model_$timestamp.pb  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
-az storage blob upload --container-name $label_container_name --file $temp_pipeline --name pipeline_$timestamp.config  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
-az storage blob upload --container-name $label_container_name --file $label_map_path --name label_map_$timestamp.pbtxt  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
-az storage blob upload --container-name $label_container_name --file $cur_config --name config_$timestamp.ini  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
-az storage blob upload --container-name $label_container_name --file $untagged_output --name totag_$timestamp.csv --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
-az storage blob upload --container-name $label_container_name --file $validation_output --name performance_$timestamp.csv --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
+#echo "Training model"
+#rm -rf $train_dir
+#echo $temp_pipeline
+#python ${tf_location_legacy}/train.py --train_dir=$train_dir --pipeline_config_path=$temp_pipeline --logtostderr
+## Export inference graph of model
+#echo "Exporting inference graph"
+#rm -rf $inference_output_dir
+#python ${tf_location}/export_inference_graph.py --input_type "image_tensor" --pipeline_config_path "$temp_pipeline" --trained_checkpoint_prefix "${train_dir}/model.ckpt-$train_iterations" --output_directory "$inference_output_dir"
+### TODO: Validation on Model, keep track of MAP etc.
+## Use inference graph to create predictions on untagged images
+#echo "Creating new predictions"
+#python ${python_file_directory}/create_predictions.py cur_config.ini
+#echo "Calculating performance"
+#python ${python_file_directory}/map_validation.py cur_config.ini
+### Rename predictions and inference graph based on timestamp and upload
+#echo "Uploading new data"
+#timestamp=$(date +%s)
+#az storage blob upload --container-name $label_container_name --file ${inference_output_dir}/frozen_inference_graph.pb --name model_$timestamp.pb  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
+#az storage blob upload --container-name $label_container_name --file $temp_pipeline --name pipeline_$timestamp.config  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
+#az storage blob upload --container-name $label_container_name --file $label_map_path --name label_map_$timestamp.pbtxt  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
+#az storage blob upload --container-name $label_container_name --file $cur_config --name config_$timestamp.ini  --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
+#az storage blob upload --container-name $label_container_name --file $untagged_output --name totag_$timestamp.csv --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
+#az storage blob upload --container-name $label_container_name --file $validation_output --name performance_$timestamp.csv --account-name $AZURE_STORAGE_ACCOUNT --account-key $AZURE_STORAGE_KEY
