@@ -103,3 +103,32 @@ Human annotator(s) deletes any leftovers from previous predictions (csv files in
 3) Pushing back new set of labeled images to storage (`active-learning-detect\tag\upload_vott_json.py`) 
 
 Training cycle can now be repeated on bigger training set and dataset with higher quality of pre-labeled bounding boxes could be obtained. 
+
+# Running prediciton on a new batch of data (existing model)
+
+Send the config to the remote machine (make sure it is updated with thhe model that you want to use).
+```
+scp "config_usgs19_pred20191021.ini" cmi@13.77.159.88:/home/cmi/active-learning-detect
+```
+
+SSH into the machine, change directory to "train" 
+
+```
+cmi@13.77.159.88
+```
+
+Remove the old training direcotry to avoind running prediction on the last batch of images you uploaded.
+
+```
+rm -rd data
+```
+
+```
+cd active-learning-detect/train
+```
+
+Run the prediction scipt with the config that you just uploaded
+
+```
+sh active_learning_predict_no_train.sh ../config_usgs19_pred20191021.ini
+```
