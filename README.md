@@ -4,7 +4,7 @@ Good news that you do not have to label all images  (draw bounding boxes) from s
 Please refer to this blog post that describes Active Learning and semi-automated flow: 
   [Active Learning for Object Detection in Partnership with Conservation Metrics](https://www.microsoft.com/developerblog/2018/11/06/active-learning-for-object-detection/)
 We will use Transfer Learning and Active Learning as core Machine Learning  components of the pipeline.
- -- Transfer Learning: use powerful pre-trained on big dataset (COCO) model as a startining point for fine-tuning foe needed classes.
+ -- Transfer Learning: use powerful pre-trained on big dataset (COCO) model as a starting point for fine-tuning foe needed classes.
  -- Active Learning: human annotator labels small set of images (set1), trains Object Detection Model  (model1) on this set1 and then uses model1 to predict bounding boxes on images (thus pre-labeling those). Human annotator reviews mode1's predictions where the model was less confident -- and thus comes up with new set of images -- set2. Next phase will be to train more powerful model2 on bigger train set that includes set1 and set2 and use model2 prediction results as draft of labeled set3…
 The plan is to have 2 versions of pipeline set-up.
 
@@ -17,7 +17,7 @@ This one (ideally) includes minimum setup. The core components here are:
 It will also be used to save "progress" logs of labeling activities
 2) "Tagger" machine(s) 
 This is computer(s) that human annotator(s) is using as environment for labeling portion of images -- for example [VOTT](https://github.com/Microsoft/VoTT).  
-Here example of labeling flow in VOTT: I've labled wood "knots" (round shapes) and "defect" (pretty much  non-round shaped type of defect):
+Here example of labeling flow in VOTT: I've labeled wood "knots" (round shapes) and "defect" (pretty much  non-round shaped type of defect):
 
 ![Labeling](images/VOTT_knot_defect.PNG)
 
@@ -40,12 +40,12 @@ The flow below assumes the following:
 1) We use Tensorflow Object Detection API (Faster RCNN with Resnet 50 as default option)  to fine tune object detection. 
 2) Tensorflow Object Detection API is setup on Linux box (Azure DSVM is an option) that you can ssh to. See docs for Tensorflow Object Detection API regarding its general config.
 3) Data(images) is in Azure blob storage
-4) Human annotators use [VOTT](https://github.com/Microsoft/VoTT)  to label\revise images.  To support another tagging tool it's output (boudin boxes) need to be converted to csv form -- pull requests are welcomed!
+4) Human annotators use [VOTT](https://github.com/Microsoft/VoTT)  to label\revise images.  To support another tagging tool it's output (bounding boxes) need to be converted to csv form -- pull requests are welcomed!
 
 Here is general flow has 2 steps:
 1) Environments setup
-2) Active Learnining cycle: labeling data and running scipts to update model and feed back results for human annotator to review.  
-The whole flow is currenly automated with **4 scrips** user needs to run.
+2) Active Learning cycle: labeling data and running scripts to update model and feed back results for human annotator to review.  
+The whole flow is currently automated with **4 scrips** user needs to run.
 
 
 ### General  prep
@@ -54,19 +54,19 @@ The whole flow is currenly automated with **4 scrips** user needs to run.
 
 
 ### On Linux box aka Model (re)training env
-Run the devops/dsvm/deploy_dsvm.sh scrript to create a VM for this process. follow the instructions [here]()
+Run the devops/dsvm/deploy_dsvm.sh script to create a VM for this process. follow the instructions [here]()
 
 ### Tagger machine(s) (could be same as Linux box or separate boxes\vms)
 1) Have Python 3.6+ up and running 
 TODO: add section for installing python 
-If you do not have python 3.6+ downlaod [anaconda python](https://www.anaconda.com/distribution/#download-section) 
+If you do not have python 3.6+ download [anaconda python](https://www.anaconda.com/distribution/#download-section) 
 ```
 python --version
 
 python -m pip install azure.storage.blob
 ```
 3) Clone this repo, copy  updated config.ini from Model re-training box (as it has Azure Blob Storage and other generic info already).
-4) Update  _config.ini_ values for _# Tagger Machine_ section:    This is a temperary directory, and the process will delete all the 
+4) Update  _config.ini_ values for _# Tagger Machine_ section:    This is a temporary directory, and the process will delete all the 
    files every time you label so do not use an existing dir that you care about
         `tagging_location=D:\temp\NewTag`
 
@@ -85,7 +85,7 @@ Before your first time running the model, and at any later time if you would lik
 
 `~/repos/models/research/active-learning-detect/train$ . ./repartition_test_set_script.sh  ../config.ini`
 
-This script will take all the tagged data and split some of it into a test set, which will not be trained/validated on and will then be use by evalution code to return mAP values.
+This script will take all the tagged data and split some of it into a test set, which will not be trained/validated on and will then be use by evaluation code to return mAP values.
 
 Run bash script:  
 `~/repos/models/research/active-learning-detect/train$ . ./active_learning_train.sh  ../config.ini`
@@ -106,28 +106,32 @@ Training cycle can now be repeated on bigger training set and dataset with highe
 
 # Running prediciton on a new batch of data (existing model)
 
-Send the config to the remote machine (make sure it is updated with thhe model that you want to use).
+Send the config to the remote machine (make sure it is updated with the model that you want to use).
 ```
 scp "config_usgs19_pred20191021.ini" cmi@13.77.159.88:/home/cmi/active-learning-detect
 ```
 
-SSH into the machine, change directory to "train" 
+SSH into the machine
 
 ```
 cmi@13.77.159.88
 ```
 
-Remove the old training direcotry to avoind running prediction on the last batch of images you uploaded.
+Remove the old training directory to avoid running prediction on the last batch of images you uploaded.
 
 ```
 rm -rd data
 ```
 
+change directory to "train" 
+
 ```
 cd active-learning-detect/train
 ```
 
-Run the prediction scipt with the config that you just uploaded
+Run the prediction script with the config that you just uploaded
+
+active_learning_predict_no_train.sh uses the info in the config file to download the images from blob storage, download the model file from blob storage, and then run prediction on these images.  
 
 ```
 sh active_learning_predict_no_train.sh ../config_usgs19_pred20191021.ini
