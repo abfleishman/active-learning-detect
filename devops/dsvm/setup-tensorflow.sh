@@ -19,6 +19,7 @@ git clone https://github.com/abfleishman/active-learning-detect repos/active-lea
 
 echo -e '\n*******\tClone Tensorflow Models\t*******\n'
 git clone https://github.com/tensorflow/models.git repos/models
+cd repos/models/ && git checkout fe748d4a4a1576b57c279014ac0ceb47344399c4 . && cd  ../..
 
 echo -e '\n*******\tInstall Tensorflow package\t*******\n'
 cd repos/models/ && pip install tensorflow-gpu==1.13.1
