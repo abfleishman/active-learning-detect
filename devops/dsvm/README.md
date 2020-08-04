@@ -43,7 +43,7 @@ For instance:
 
 <pre>
 RESOURCE_GROUP=<b>MyAzureResourceGroup</b>
-RESOURCE_GROUP=westus2
+LOCATION=westus2
 VM_SKU=Standard_NC6_Promo # Must be a NC series machine for GPU computing. Make sure VM SKU is available in your resource group's region 
 VM_IMAGE=microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:latest
 VM_NAME=<b>myvmname</b> # give it a unique VM name
