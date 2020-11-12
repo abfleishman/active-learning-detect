@@ -86,6 +86,8 @@ in the section installing python packages:
 
 ## Initialize a new project
 
+### Edit the AL config file
+You need to edit the AL config.ini file that you will be using for your new project. There is an example [here](https://github.com/abfleishman/active-learning-detect/blob/master/config.ini) and description of many of the parameters [here](https://github.com/abfleishman/active-learning-detect/blob/master/config_description.md) but there might be some required things missing from both (recent additions). 
 ### Send your AL config to the VM
 In your second git bash consol, start an ssh agent, add the key, and then send your edited AL config to the VM (not the DSVM_config):
 ```
