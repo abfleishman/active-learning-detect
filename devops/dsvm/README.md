@@ -75,7 +75,7 @@ Note that in the host argument **_admin_**@127.0.0.1 section is the DSVM Admin n
 
 ```
 # this command will connect over ssh and run the `sh` (bash) the arguments after the "<" 
-ssh cmi@40.65.119.87 "sh" < "/D/CM,Inc/git_repos/ald/devops/dsvm/setup-tensorflow.sh"
+ssh -i "/c/Users/ConservationMetrics/.ssh2/act-learn-key.pub" cmi@52.247.196.244 "sh" < "/D/CM,Inc/git_repos/active-learning-detect/devops/dsvm/setup-tensorflow.sh"
 
 ```
 
