@@ -75,7 +75,7 @@ Note that in the host argument **_admin_**@127.0.0.1 section is the DSVM Admin n
 
 ```
 # this command will connect over ssh and run the `sh` (bash) the arguments after the "<" 
-ssh -i "/c/Users/ConservationMetrics/.ssh2/act-learn-key.pub" cmi@52.247.196.244 "sh" < "/D/CM,Inc/git_repos/active-learning-detect/devops/dsvm/setup-tensorflow.sh"
+ssh -i "/c/Users/ConservationMetrics/.ssh2/act-learn-key" cmi@52.191.140.253 "sh" < "/D/CM,Inc/git_repos/active-learning-detect/devops/dsvm/setup-tensorflow.sh"
 
 ```
 
@@ -95,7 +95,7 @@ eval "$(ssh-agent)"
 ssh-add -k ~/.ssh/act-learn-key-test
 
 # scp copies a file to a remote computer into a folder (after the ":") on that computer 
-scp "/D/CM,Inc/git_repos/ald/config_inception.ini" cmi@40.65.119.87:/home/cmi/repos/active-learning-detect
+scp "/d/CM,Inc/git_repos/active-learning-detect/config_devtest.ini" cmi@52.191.140.253:/home/cmi/repos/active-learning-detect
 ```
 
 ### initialize the project
@@ -103,16 +103,16 @@ Connect via SSH, initialize your active learning project by changing directory
 
 here we are exicuting the command `sh ./active-learning-detect/train/active_learning_initialize.sh ...` on the remote machine.
 ```
-ssh cmi@40.65.119.87
+ssh cmi@52.191.140.253
 
-cd active-learning-detect/train
+cd repos/active-learning-detect/train
 
 sh ./active_learning_initialize.sh ../config_inception.ini
 ```
 #### NOT WORKING
 The intention is that this would be able to run the script without being in an ssh session but it is not working.
 ```
-ssh cmi@40.65.119.87 "cd ./repos/active-learning-detect/train&&sh ./active_learning_initialize.sh ../config_inception.ini"
+ssh cmi@52.191.140.253 "cd ./repos/active-learning-detect/train&&sh ./active_learning_initialize.sh ../config_inception.ini"
 ```
 After you do that you can switch to the R cmiimagetools workflow for labeling.  Once you have labeled a few images (100) then we can train a model
 
